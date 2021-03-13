@@ -1,4 +1,5 @@
-﻿using IPCA.Networking;
+﻿using IPCA.Characters;
+using IPCA.Networking;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,6 +17,8 @@ public class GameManager
     public DebugMenuManager debugManager = new DebugMenuManager();
 
     public AudioManager audioManager = new AudioManager();
+
+    public Menu_UI UI_Ref;
 
     //References
     public string PlayerName = "NoName";

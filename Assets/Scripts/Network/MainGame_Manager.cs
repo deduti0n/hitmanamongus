@@ -9,13 +9,19 @@ public class MainGame_Manager : baseActor
     public List<Transform> Spawn_Positions = new List<Transform>();
     public List<Color> Player_Colors = new List<Color>();
 
+    public Menu_UI Game_UI;
+
     public Camera ViewCam;
 
     public bool isGameOver = false;
 
+    public float VotingTimer = 30f;
+
+    public Dictionary<string, string> VotingPoll = new Dictionary<string,string>();
+
     protected override void onStart()
     {
-        //Spawn my avatar
+        //Spawn avatar
         GameManager.Instance.networkManager.Network_PlayerRef = PhotonNetwork.Instantiate("PlayerCharacter",
                 Spawn_Positions[GameManager.Instance.networkManager.Room_CurrentConnections-1].position,
                 Spawn_Positions[GameManager.Instance.networkManager.Room_CurrentConnections - 1].rotation, 0).GetComponent<Character_PlayerController>();
@@ -26,12 +32,20 @@ public class MainGame_Manager : baseActor
 
         GameManager.Instance.networkManager.Network_PlayerRef.Player_Refresh();
 
+        //Spawn UI
+        Instantiate(Game_UI);
+
+        //Generate a number of tasks to complete 
+
+
+        //Disable overview cam
         ViewCam.gameObject.SetActive(false);
     }
 
     public override void onUpdate()
     {
-        if (!isGameOver && (Game_GetAlivePlayers() < 3 || Game_isEveryInnocentDead() || !Game_isAnySusAlive()))
+        //Game over
+        if (GameManager.Instance.networkManager.Network_isLobbyLeader && !isGameOver && (Game_GetAlivePlayers() < 3 || Game_isEveryInnocentDead() || !Game_isAnySusAlive()))
         {
             if (Game_isEveryInnocentDead())
             {
@@ -48,6 +62,13 @@ public class MainGame_Manager : baseActor
                 //Innocents wins
                 isGameOver = true;
             }
+        }
+
+        //Voting
+        if(GameManager.Instance.networkManager.Network_isLobbyLeader && (VotingTimer < 30f || VotingPoll.Count >= GameManager.Instance.networkManager.Room_CurrentConnections))
+        {
+            //Either skip or kill the chosen player
+
         }
     }
 

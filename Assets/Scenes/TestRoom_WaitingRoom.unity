@@ -16962,6 +16962,7 @@ MonoBehaviour:
   - {r: 0, g: 0.5152774, b: 1, a: 0}
   - {r: 0, g: 1, b: 0.8474369, a: 0}
   - {r: 0, g: 1, b: 0.5261214, a: 0}
+  Game_UI: {fileID: 5776493983782542761, guid: 7188915ba4bd18d4a9279ea13b72f041, type: 3}
   ViewCam: {fileID: 1042055020}
   isGameOver: 0
 --- !u!4 &1537007025

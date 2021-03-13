@@ -18,7 +18,9 @@ namespace IPCA.Characters
         private Camera char_camera;
         private CharacterController char_controller;
         private Animator char_animcontroller;
-        
+
+        private Vector3 char_StartPosition;
+
         [Header("Networking")]
         public CharacterOwner Owner = CharacterOwner.Other;
         public bool Character_isSuspect = false; // Goal is to kill everyone
@@ -35,6 +37,7 @@ namespace IPCA.Characters
         private float char_TurnSpeed = 360f;
 
         private float char_vspeed = 0;
+        public bool Character_Lock = false;
 
         [Header("Camera Settings")]
         public float Game_LookSensivity = 1f;
@@ -47,6 +50,12 @@ namespace IPCA.Characters
             char_controller = GetComponent<CharacterController>();
             char_animcontroller = GetComponent<Animator>();
             char_camera = transform.Find("Camera").GetComponent<Camera>();
+
+            //Debugging mode
+            if (Owner == CharacterOwner.Mine)
+                GameManager.Instance.networkManager.Network_PlayerRef = this;
+
+            char_StartPosition = transform.position;
 
             Player_Refresh();
         }
@@ -97,7 +106,6 @@ namespace IPCA.Characters
         public Vector3 Character_GetColor()
         {
             //Get my color
-
             Color col = Character_Mesh.materials[0].GetColor("_EmissionColor");
 
             Vector3 Coll = new Vector3(col.r, col.g, col.b);
@@ -107,19 +115,11 @@ namespace IPCA.Characters
 
         public override void onUpdate()
         {
-            if (Owner == CharacterOwner.Mine)
+            if (Owner == CharacterOwner.Mine && !Character_Lock)
             {
                 //Update locally
                 Update_Locomotion();
                 Update_Direction();
-
-                //Update my data on other players side
-
-            }
-            else
-            {
-                //Receive data from others and apply
-
             }
         }
 
