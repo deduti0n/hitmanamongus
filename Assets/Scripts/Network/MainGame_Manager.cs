@@ -11,6 +11,8 @@ public class MainGame_Manager : baseActor
 
     public Menu_UI Game_UI;
 
+    private Menu_UI Game_UI_Ref;
+
     public Camera ViewCam;
 
     public bool isGameOver = false;
@@ -18,6 +20,8 @@ public class MainGame_Manager : baseActor
     public float VotingTimer = 30f;
 
     public Dictionary<string, string> VotingPoll = new Dictionary<string,string>();
+
+    private PhotonView photonView;
 
     protected override void onStart()
     {
@@ -33,14 +37,34 @@ public class MainGame_Manager : baseActor
         GameManager.Instance.networkManager.Network_PlayerRef.Player_Refresh();
 
         //Spawn UI
-        Instantiate(Game_UI);
+        Game_UI_Ref = Instantiate(Game_UI);
 
         //Generate a number of tasks to complete 
 
 
         //Disable overview cam
         ViewCam.gameObject.SetActive(false);
+
+        photonView = GetComponent<PhotonView>();
     }
+
+
+    [PunRPC]
+    void StartVote()
+    {
+        //Start timer and voting menu
+        Game_UI_Ref.Menu_OpenVotingMenu();
+    }
+
+    private void Update_Input()
+    {
+        if(Input.GetKeyDown(KeyCode.Z))
+        {
+            //Method call on all
+            photonView.RPC("StartVote", RpcTarget.All);
+        }
+    }
+
 
     public override void onUpdate()
     {
@@ -68,8 +92,14 @@ public class MainGame_Manager : baseActor
         if(GameManager.Instance.networkManager.Network_isLobbyLeader && (VotingTimer < 30f || VotingPoll.Count >= GameManager.Instance.networkManager.Room_CurrentConnections))
         {
             //Either skip or kill the chosen player
-
         }
+
+        Update_Input();
+    }
+
+    private void Game_RoundRestart()
+    {
+        GameManager.Instance.networkManager.Network_PlayerRef.TeleportToSpawn();
     }
 
     private bool Game_isEveryInnocentDead()

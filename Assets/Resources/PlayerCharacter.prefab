@@ -1842,6 +1842,7 @@ MonoBehaviour:
   UI_PlayerName: {fileID: 2619632644756123973}
   Character_Mesh: {fileID: 4136228647684952679}
   Character_RunSpeed: 8
+  Character_Lock: 0
   Game_LookSensivity: 1
   Camera_LookInterpolation: 1
   char_YLimits: {x: 80, y: -80}

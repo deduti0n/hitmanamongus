@@ -138,6 +138,19 @@ namespace IPCA.Characters
 
         }
 
+        public void Character_Kill()
+        {
+            Character_isDead = true;
+
+            //Play death animation
+
+        }
+
+        public void TeleportToSpawn()
+        {
+            transform.position = char_StartPosition;
+        }
+
         private void Update_Locomotion()
         {
             //Direction

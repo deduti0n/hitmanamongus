@@ -14,7 +14,7 @@ public class Menu_UI : baseActor
         VoteMenu.alpha = 0f;
         VoteMenu.interactable = false;
 
-        StartCoroutine(OpenMenu());
+        //StartCoroutine(OpenMenu());
     }
 
     IEnumerator OpenMenu()
