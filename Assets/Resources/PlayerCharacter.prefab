@@ -1835,7 +1835,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ActorType: 1
-  isBeingNoisy: 0
+  Game_UI_Ref: {fileID: 0}
+  AvailableTasks: []
   Owner: 1
   Character_isSuspect: 0
   Character_isDead: 0

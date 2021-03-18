@@ -52,6 +52,8 @@ namespace IPCA.Networking
     {
         public NetworkConState Network_ConnectionState = NetworkConState.Idle;
         public Character_PlayerController Network_PlayerRef = null;
+        
+        private List<Character_PlayerController> Network_AllPlayerRef = new List<Character_PlayerController>();
 
         public bool Network_isLobbyLeader = false;
         public NetworkConState Room_ConnectionState = NetworkConState.Idle;
@@ -70,6 +72,22 @@ namespace IPCA.Networking
                 Room_CurrentConnections = PhotonNetwork.CurrentRoom.PlayerCount;
             else
                 Room_CurrentConnections = 0;
+        }
+
+        public List<Character_PlayerController> Network_GetAllPlayerAvatars()
+        {
+            foreach(Character_PlayerController avatar in Network_AllPlayerRef.ToArray())
+            {
+                if (avatar == null)
+                    Network_AllPlayerRef.Remove(avatar);
+            }
+
+            return Network_AllPlayerRef;
+        }
+
+        public void Network_AddPlayerAvatars(Character_PlayerController avatar)
+        {
+            Network_AllPlayerRef.Add(avatar);
         }
 
         public void Network_ConnectToPhoton()

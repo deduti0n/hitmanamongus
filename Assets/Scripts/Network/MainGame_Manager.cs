@@ -4,8 +4,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class Character_Task
+{
+    public interactionActor Task_interaction;
+    public bool Task_State = false;
+
+    public Character_Task(interactionActor interaction)
+    {
+        Task_interaction = interaction;
+    }
+}
+
 public class MainGame_Manager : baseActor
 {
+    public List<Character_Task> AvailableTasks = new List<Character_Task>();
     public List<Transform> Spawn_Positions = new List<Transform>();
     public List<Color> Player_Colors = new List<Color>();
 
@@ -38,16 +51,36 @@ public class MainGame_Manager : baseActor
 
         //Spawn UI
         Game_UI_Ref = Instantiate(Game_UI);
+        GameManager.Instance.networkManager.Network_PlayerRef.Game_UI_Ref = Game_UI_Ref;
 
-        //Generate a number of tasks to complete 
+        //Reset tasks
+        foreach(Character_Task task in AvailableTasks)
+        {
+            task.Task_State = false;
+            task.Task_interaction.isInteractible = false;
+            task.Task_interaction.ExtraFunc += delegate() { task.Task_State = true; GameManager.Instance.networkManager.Network_PlayerRef.UpdateTasks(); };
+        }
 
+        int i = 0;
+
+        while(i < 2)
+        {
+            int ranIndex = Random.Range(0, AvailableTasks.Count);
+
+            if (!GameManager.Instance.networkManager.Network_PlayerRef.AvailableTasks.Contains(AvailableTasks[ranIndex]))
+                GameManager.Instance.networkManager.Network_PlayerRef.AvailableTasks.Add(AvailableTasks[ranIndex]);
+
+            i++;
+        }
+
+        GameManager.Instance.networkManager.Network_PlayerRef.UpdateTasks();
 
         //Disable overview cam
         ViewCam.gameObject.SetActive(false);
 
+        //Get my component
         photonView = GetComponent<PhotonView>();
     }
-
 
     [PunRPC]
     void StartVote()
@@ -65,10 +98,9 @@ public class MainGame_Manager : baseActor
         }
     }
 
-
     public override void onUpdate()
     {
-        //Game over
+        //Leader only
         if (GameManager.Instance.networkManager.Network_isLobbyLeader && !isGameOver && (Game_GetAlivePlayers() < 3 || Game_isEveryInnocentDead() || !Game_isAnySusAlive()))
         {
             if (Game_isEveryInnocentDead())
@@ -86,12 +118,12 @@ public class MainGame_Manager : baseActor
                 //Innocents wins
                 isGameOver = true;
             }
-        }
 
-        //Voting
-        if(GameManager.Instance.networkManager.Network_isLobbyLeader && (VotingTimer < 30f || VotingPoll.Count >= GameManager.Instance.networkManager.Room_CurrentConnections))
-        {
-            //Either skip or kill the chosen player
+            //Voting
+            if ((VotingTimer < 30f || VotingPoll.Count >= GameManager.Instance.networkManager.Room_CurrentConnections))
+            {
+                //Either skip or kill the chosen player
+            }
         }
 
         Update_Input();
@@ -104,32 +136,41 @@ public class MainGame_Manager : baseActor
 
     private bool Game_isEveryInnocentDead()
     {
-        return false;
+        int alive = 0;
+
+        foreach (Character_PlayerController player in GameManager.Instance.networkManager.Network_GetAllPlayerAvatars())
+        {
+            if (!player.char_isSus && !player.Character_isDead)
+                alive++;
+        }
+
+        return alive > 0 ? false : true;
     }
 
     private bool Game_isAnySusAlive()
     {
-        return false;
+        int alive = 0;
+
+        foreach (Character_PlayerController player in GameManager.Instance.networkManager.Network_GetAllPlayerAvatars())
+        {
+            if (player.char_isSus && !player.Character_isDead)
+                alive++;
+        }
+
+        return alive > 0 ? true: false;
     }
 
     private int Game_GetAlivePlayers()
     {
-        return 0;
-    }
+        int alive = 0;
 
-    public override void onFixedUpdate()
-    {
+        foreach(Character_PlayerController player in GameManager.Instance.networkManager.Network_GetAllPlayerAvatars())
+        {
+            if (!player.Character_isDead)
+                alive++;
+        }
 
-    }
-
-    public override void onLateUpdate()
-    {
-
-    }
-
-    protected override void onDestroy()
-    {
-
+        return alive;
     }
 
     void OnGUI()

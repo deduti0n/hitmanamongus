@@ -1,6 +1,7 @@
 ﻿using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -20,6 +21,15 @@ namespace IPCA.Characters
         private Animator char_animcontroller;
 
         private Vector3 char_StartPosition;
+        public interactionActor targetInteraction;
+
+        public bool char_isSus = false;
+
+        [HideInInspector]
+        public Menu_UI Game_UI_Ref;
+
+        [Header("Tasks")]
+        public List<Character_Task> AvailableTasks = new List<Character_Task>();
 
         [Header("Networking")]
         public CharacterOwner Owner = CharacterOwner.Other;
@@ -50,6 +60,9 @@ namespace IPCA.Characters
             char_controller = GetComponent<CharacterController>();
             char_animcontroller = GetComponent<Animator>();
             char_camera = transform.Find("Camera").GetComponent<Camera>();
+
+            //Save every spawned avatar in this list
+            GameManager.Instance.networkManager.Network_AddPlayerAvatars(this);
 
             //Debugging mode
             if (Owner == CharacterOwner.Mine)
@@ -120,6 +133,8 @@ namespace IPCA.Characters
                 //Update locally
                 Update_Locomotion();
                 Update_Direction();
+
+                Update_Interactions();
             }
         }
 
@@ -144,6 +159,81 @@ namespace IPCA.Characters
 
             //Play death animation
 
+        }
+
+        public void UpdateTasks()
+        {
+            //Update Task list and states
+            string list = "";
+
+            foreach(Character_Task task in AvailableTasks)
+            {
+                list += "#Complete '" + task.Task_interaction.InteractionName + "' " + (task.Task_State? "(Completed!)\n": "\n");
+            }
+
+            Game_UI_Ref.UI_UpdateTaskList(list);
+        }
+
+        public void Update_Interactions()
+        {
+            //Get nearby interactions
+            List<baseActor> interactions = GameManager.Instance.actorManager.GetNearbyActorsByType(ActorTypes.Interaction, transform.position, 3f);
+            List<interactionActor> interactionsUp = new List<interactionActor>();
+
+            //Filter out disabled interactions and upcasting
+            foreach (interactionActor interaction in interactions)
+            {
+                if (interaction.isInteractible)
+                    interactionsUp.Add(interaction);
+            }
+
+            //Order list by distance
+            interactionsUp = interactionsUp.OrderBy(
+            x => Vector3.Distance(this.transform.position, x.transform.position)
+            ).ToList();
+
+            //Get the item closest to the camera center
+            targetInteraction = Camera_GetClosestInteractionToCamera(interactionsUp);
+
+            //Execute
+            if (Input.GetButtonDown("Interaction"))
+            {
+                targetInteraction.Execute();
+                targetInteraction = null;
+            }
+        }
+
+        private interactionActor Camera_GetClosestInteractionToCamera(List<interactionActor> interactionsUp)
+        {
+            interactionActor closest = null;
+            float dot = -2;
+
+            foreach (interactionActor interaction in interactionsUp.ToArray())
+            {
+                Vector3 localPoint = char_camera.transform.InverseTransformPoint(interaction.transform.position).normalized;
+                Vector3 forward = Vector3.forward;
+                float test = Vector3.Dot(localPoint, forward);
+
+                if (test > dot)
+                {
+                    dot = test;
+                    closest = interaction;
+                }
+            }
+
+            return closest;
+        }
+
+        public void SetTaskCompleted(interactionActor terminal)
+        {
+            foreach(Character_Task task in AvailableTasks)
+            {
+                if (task.Task_interaction == terminal)
+                    task.Task_State = true;
+            }
+
+            //Complete task and update UI
+            UpdateTasks();
         }
 
         public void TeleportToSpawn()

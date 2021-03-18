@@ -167,6 +167,7 @@ GameObject:
   - component: {fileID: 1251305246}
   - component: {fileID: 1251305248}
   - component: {fileID: 1251305247}
+  - component: {fileID: 746758176}
   m_Layer: 5
   m_Name: Label_Execute
   m_TagString: Untagged
@@ -234,6 +235,18 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '[E] INTERACT'
+--- !u!225 &746758176
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1251305245}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1599718138
 GameObject:
   m_ObjectHideFlags: 0
@@ -854,7 +867,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5776493983063338396
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1423,7 +1436,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ActorType: 0
-  isBeingNoisy: 0
+  Interaction_Root: {fileID: 746758176}
+  Tasks_List: {fileID: 5776493983933594648}
+  Task_Progress: {fileID: 5776493983063338395}
   VoteMenu: {fileID: 5776493983720373490}
   VotingItemTemplate: {fileID: 5776493982928706252}
 --- !u!1 &5776493983799081021

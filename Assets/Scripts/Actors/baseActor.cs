@@ -17,10 +17,6 @@ public class baseActor : MonoBehaviour
     [Header("Actor settings")]
     public ActorTypes ActorType = ActorTypes.Default;
 
-    [HideInInspector]
-    public bool isBeingNoisy = false;
-
-
     private void Awake()
     {
         //Initialize actor
