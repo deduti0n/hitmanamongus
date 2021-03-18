@@ -3097,7 +3097,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ActorType: 0
-  isBeingNoisy: 0
   UI_PhotonConnectionState: {fileID: 798651282}
   UI_RoomName: {fileID: 329469100}
   UI_GamerName: {fileID: 510046279}

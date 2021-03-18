@@ -1835,6 +1835,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ActorType: 1
+  targetInteraction: {fileID: 0}
+  char_isSus: 0
   Game_UI_Ref: {fileID: 0}
   AvailableTasks: []
   Owner: 1

@@ -121,6 +121,12 @@ public class DebugMenuManager
         {
             PLAYER_FLY_MODE = !PLAYER_FLY_MODE;
         }));
+
+        debugItems.Add(new DebugMenuItem("Disconnect", DebugItemType.Click, delegate ()
+        {
+            Debug.Log("Disconnecting...");
+            Application.Quit();
+        }));
     }
 
     private void debugMenu_Selector(float axis, ref bool hold, ref int id, int maxID)

@@ -11,6 +11,8 @@ public class terminalInteraction : interactionActor
 
     public override void Execute()
     {
+        base.Execute();
+
         //UI loading task timer and mark as complete
         isInteractible = false;
     }

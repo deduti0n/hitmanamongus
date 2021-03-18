@@ -57,7 +57,7 @@ public class MainGame_Manager : baseActor
         foreach(Character_Task task in AvailableTasks)
         {
             task.Task_State = false;
-            task.Task_interaction.isInteractible = false;
+            task.Task_interaction.isInteractible = true;
             task.Task_interaction.ExtraFunc += delegate() { task.Task_State = true; GameManager.Instance.networkManager.Network_PlayerRef.UpdateTasks(); };
         }
 
