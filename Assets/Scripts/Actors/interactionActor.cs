@@ -21,7 +21,9 @@ public class interactionActor : baseActor
         //Disable this component
         isInteractible = false;
 
-        ExtraFunc();
+        if(ExtraFunc != null)
+            ExtraFunc();
+
         ExtraFunc = null;
     }
 }

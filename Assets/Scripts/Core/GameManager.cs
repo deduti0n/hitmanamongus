@@ -20,6 +20,8 @@ public class GameManager
 
     public Menu_UI UI_Ref;
 
+    public MainGame_Manager ingameManager;
+
     //References
     public string PlayerName = "NoName";
 

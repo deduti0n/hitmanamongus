@@ -2,6 +2,7 @@
 using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [System.Serializable]
@@ -41,14 +42,23 @@ public class MainGame_Manager : baseActor
     private bool votingStarted = false;
     private bool GameStarted = false;
 
-    protected override void onStart()
+    protected void Start()
     {
-        //Spawn avatar
-        GameManager.Instance.networkManager.Network_PlayerRef = PhotonNetwork.Instantiate("PlayerCharacter",
-                Spawn_Positions[GameManager.Instance.networkManager.Room_CurrentConnections-1].position,
-                Spawn_Positions[GameManager.Instance.networkManager.Room_CurrentConnections - 1].rotation, 0).GetComponent<Character_PlayerController>();
+        GameManager.Instance.ingameManager = this;
 
-        GameManager.Instance.networkManager.Network_PlayerRef.Character_SetColor(Player_Colors[GameManager.Instance.networkManager.Room_CurrentConnections - 1]);
+        //Spawn avatar
+        int id = PhotonNetwork.CurrentRoom.PlayerCount - 1;
+
+        if (id < 0)
+            id = 0;
+
+        Debug.Log("Spawning player...");
+
+        GameManager.Instance.networkManager.Network_PlayerRef = PhotonNetwork.Instantiate("PlayerCharacter",
+                Spawn_Positions[id].position,
+                Spawn_Positions[id].rotation, 0).GetComponent<Character_PlayerController>();
+
+        GameManager.Instance.networkManager.Network_PlayerRef.Character_SetColor(Player_Colors[id]);
         
         GameManager.Instance.networkManager.Network_PlayerRef.Owner = CharacterOwner.Mine;
 
@@ -90,12 +100,44 @@ public class MainGame_Manager : baseActor
     [PunRPC]
     void StartVote(string players)
     {
-        //players --> filter out players names and show them on screen to start voting
+        //filter out players names and show them on screen to start voting
+        string[] playersFiltered = players.Split(';');
+
+        List<string> playerNames = new List<string>();
+
+        foreach(string player in playersFiltered)
+        {
+            if (player != "" && player != GameManager.Instance.PlayerName)
+                playerNames.Add(player);
+        }
 
         //Start timer and voting menu
-        Game_UI_Ref.Menu_OpenVotingMenu();
+        if (GameManager.Instance.networkManager.Network_isLobbyLeader)
+        { 
+            //timer is lobby leader side
+            VotingTimer = 30; 
+        }
+
+        Game_UI_Ref.Menu_OpenVotingMenu(playerNames);
 
         votingStarted = true;
+    }
+
+    [PunRPC]
+    void RequestStartVote()
+    {
+        if (GameManager.Instance.networkManager.Network_isLobbyLeader)
+        {
+            List<Character_PlayerController> avatars = new List<Character_PlayerController>(GameManager.Instance.networkManager.Network_GetAllPlayerAvatars());
+            string players = "";
+
+            foreach (Character_PlayerController avatar in avatars)
+            {
+                players += avatar.UI_PlayerName.text + ";";
+            }
+
+            photonView.RPC("StartVote", RpcTarget.All, players);
+        }
     }
 
     [PunRPC]
@@ -106,8 +148,16 @@ public class MainGame_Manager : baseActor
         VotingPoll.Clear();
         alreadyVoted = false;
 
-        if(GameManager.Instance.PlayerName == toKick)
+        if (GameManager.Instance.PlayerName == toKick)
             GameManager.Instance.networkManager.Network_PlayerRef.Character_Kill();
+
+        StartCoroutine(CooldownMenu());
+    }
+
+    IEnumerator CooldownMenu()
+    {
+        yield return new WaitForSeconds(4f);
+        votingStarted = false;
     }
 
     [PunRPC]
@@ -117,7 +167,11 @@ public class MainGame_Manager : baseActor
         {
             VotingPoll.Add(playerName);
         }
+    }
 
+    public void MenuVote(string playerName)
+    {
+        photonView.RPC("Vote", RpcTarget.All, playerName);
         alreadyVoted = true;
     }
 
@@ -130,10 +184,28 @@ public class MainGame_Manager : baseActor
 
     private void Update_Input()
     {
-        if(Input.GetKeyDown(KeyCode.Z) && !votingStarted)
+        if(Input.GetKeyDown(KeyCode.Z) && !votingStarted && GameManager.Instance.networkManager.Room_CurrentConnections > 1)
         {
-            //Method call on all including self
-            photonView.RPC("StartVote", RpcTarget.All);
+            //Either ask lobby leader to start or start it myself
+            if (GameManager.Instance.networkManager.Network_isLobbyLeader)
+            {
+                List<Character_PlayerController> avatars = new List<Character_PlayerController>(GameManager.Instance.networkManager.Network_GetAllPlayerAvatars());
+                string players = "";
+
+                foreach (Character_PlayerController avatar in avatars)
+                {
+                    players += avatar.PlayerName + ";";
+                }
+
+                photonView.RPC("StartVote", RpcTarget.All, players);
+
+                votingStarted = true;
+            }
+            else
+            {
+                votingStarted = true;
+                photonView.RPC("RequestStartVote", RpcTarget.All);
+            }
         }
     }
 
@@ -150,9 +222,9 @@ public class MainGame_Manager : baseActor
         }
 
         //Leader only
-        if (GameStarted && GameManager.Instance.networkManager.Network_isLobbyLeader && GameManager.Instance.networkManager.Room_CurrentConnections > 2 && !isGameOver && (Game_GetAlivePlayers() < 3 || Game_isEveryInnocentDead() || !Game_isAnySusAlive()))
+        if (GameManager.Instance.networkManager.Network_isLobbyLeader && GameManager.Instance.networkManager.Room_CurrentConnections > 2 && !isGameOver)
         {
-            if (Game_isEveryInnocentDead())
+            /*if (Game_isEveryInnocentDead())
             {
                 //Sus wins
                 isGameOver = true;
@@ -166,18 +238,50 @@ public class MainGame_Manager : baseActor
             {
                 //Innocents wins
                 isGameOver = true;
-            }
+            }*/
 
-            //Voting
-            if ((VotingTimer < 30f || VotingPoll.Count >= GameManager.Instance.networkManager.Room_CurrentConnections) && votingStarted)
+            
+        }
+
+        //Voting
+        if (GameManager.Instance.networkManager.Network_isLobbyLeader && (VotingTimer < 30f || VotingPoll.Count >= GameManager.Instance.networkManager.Room_CurrentConnections) && votingStarted)
+        {
+            string toKill = "";
+
+            if (VotingPoll.Count > 2)
             {
-                string toKill = "";
+                var q = from x in VotingPoll
+                        group x by x into g
+                        let count = g.Count()
+                        orderby count descending
+                        select new { Value = g.Key, Count = count };
 
-                //Skip or kill a player
-                photonView.RPC("CloseVote", RpcTarget.All, toKill);
+                string popularVote = "";
+                int DuplicatesVote = 0;
 
-                votingStarted = false;
+                foreach (var vote in q)
+                {
+                    if (DuplicatesVote < vote.Count)
+                    {
+                        popularVote = vote.Value;
+                        DuplicatesVote = vote.Count;
+                    }
+                }
+
+                toKill = popularVote;
             }
+
+            //Skip or kill a player
+            photonView.RPC("CloseVote", RpcTarget.All, toKill);
+
+            votingStarted = false;
+        }
+        else if (VotingTimer > 0 && votingStarted)
+        {
+            //VotingTimer -= 1f * Time.deltaTime;
+
+            if (VotingTimer < 0f)
+                VotingTimer = 0f;
         }
 
         Update_Input();

@@ -1,6 +1,7 @@
 ﻿using IPCA.Characters;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,6 +23,7 @@ public class Menu_UI : baseActor
     [Header("Voting Menu")]
     public CanvasGroup VoteMenu;
     public GameObject VotingItemTemplate;
+    public List<Transform> VoteItems = new List<Transform>();
 
     protected override void onStart()
     {
@@ -44,15 +46,56 @@ public class Menu_UI : baseActor
     IEnumerator OpenMenu()
     {
         yield return new WaitForSeconds(1f);
-        Menu_OpenVotingMenu();
+        //Menu_OpenVotingMenu();
     }
 
-    public void Menu_OpenVotingMenu()
+    public void Menu_OpenVotingMenu(List<string> players)
     {
         GameManager.Instance.networkManager.Network_PlayerRef.Character_Lock = true;
         Cursor.lockState = CursorLockMode.None;
         VoteMenu.alpha = 1f;
         VoteMenu.interactable = true;
+
+        //Skip button
+        VoteMenu.transform.Find("ButtonSkip").GetComponent<Button>().onClick.AddListener(delegate
+        {
+            //Send Vote
+            if (GameManager.Instance.ingameManager)
+                GameManager.Instance.ingameManager.MenuVote("");
+
+            VoteMenu.interactable = false;
+        });
+
+        int i = 1;
+
+        //Voting buttons
+        foreach(Transform item in VoteItems)
+        {
+            if(i <= players.Count)
+            {
+                item.gameObject.SetActive(true);
+                item.transform.Find("Label").GetComponent<TextMeshProUGUI>().text = players[i - 1];
+                item.transform.Find("Votes").gameObject.SetActive(false);
+
+                VoteMenu.interactable = true;
+                string vote = players[i - 1];
+
+                item.transform.Find("Back").GetComponent<Button>().onClick.AddListener(delegate 
+                {
+                    //Send Vote
+                    if(GameManager.Instance.ingameManager)
+                        GameManager.Instance.ingameManager.MenuVote(vote);
+
+                    item.transform.Find("Votes").gameObject.SetActive(true);
+                    VoteMenu.interactable = false;
+                });      
+            }
+            else
+                item.gameObject.SetActive(false);
+
+            i++;
+        }
+
     }
 
     public void Menu_CloseVotingMenu()
@@ -81,6 +124,9 @@ public class Menu_UI : baseActor
     public override void onUpdate()
     {
         Character_PlayerController PlayerRef = GameManager.Instance.networkManager.Network_PlayerRef;
+
+        if (!PlayerRef)
+            return;
 
         if (PlayerRef && PlayerRef.targetInteraction)
             Interaction_Root.alpha = 1f;

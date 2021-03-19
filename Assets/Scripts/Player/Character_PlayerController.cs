@@ -25,7 +25,6 @@ namespace IPCA.Characters
 
         public bool char_duringTask = false;
 
-        [HideInInspector]
         public Menu_UI Game_UI_Ref;
 
         [Header("Tasks")]
@@ -36,6 +35,7 @@ namespace IPCA.Characters
         public bool Character_isSuspect = false; // Goal is to kill everyone
         public bool Character_isDead = false; // Kept dead in place -- can see the perspective of others
 
+        public string PlayerName = "";
         public TextMeshPro UI_PlayerName;
         public SkinnedMeshRenderer Character_Mesh;
 
@@ -55,6 +55,8 @@ namespace IPCA.Characters
         public Vector2 char_YLimits = new Vector2(90, -90);
         private float char_YSpeed = 360f;
 
+        public bool isDebug = false;
+
         protected override void onStart()
         {
             char_controller = GetComponent<CharacterController>();
@@ -65,12 +67,24 @@ namespace IPCA.Characters
             GameManager.Instance.networkManager.Network_AddPlayerAvatars(this);
 
             //Debugging mode
-            if (Owner == CharacterOwner.Mine)
+            if (isDebug)
+            {
                 GameManager.Instance.networkManager.Network_PlayerRef = this;
+
+                StartCoroutine(DelayVoteTest());
+            }
 
             char_StartPosition = transform.position;
 
             Player_Refresh();
+        }
+
+        IEnumerator DelayVoteTest()
+        {
+            yield return new WaitForSeconds(1f);
+            List<string> players = new List<string>();
+            players.Add("TESTE");
+            Game_UI_Ref.Menu_OpenVotingMenu(players);
         }
 
         public void Player_Refresh()
@@ -100,6 +114,7 @@ namespace IPCA.Characters
 
         public void Character_SetName(string name)
         {
+            PlayerName = name;
             UI_PlayerName.text = name;
         }
 

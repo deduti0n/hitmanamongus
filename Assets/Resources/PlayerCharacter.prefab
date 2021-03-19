@@ -1836,12 +1836,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ActorType: 1
   targetInteraction: {fileID: 0}
-  char_isSus: 0
+  char_duringTask: 0
   Game_UI_Ref: {fileID: 0}
   AvailableTasks: []
   Owner: 1
   Character_isSuspect: 0
   Character_isDead: 0
+  PlayerName: 
   UI_PlayerName: {fileID: 2619632644756123973}
   Character_Mesh: {fileID: 4136228647684952679}
   Character_RunSpeed: 8
@@ -1849,6 +1850,7 @@ MonoBehaviour:
   Game_LookSensivity: 1
   Camera_LookInterpolation: 1
   char_YLimits: {x: 80, y: -80}
+  isDebug: 0
 --- !u!114 &3345160380422507564
 MonoBehaviour:
   m_ObjectHideFlags: 0

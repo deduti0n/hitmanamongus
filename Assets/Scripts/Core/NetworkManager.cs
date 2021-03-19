@@ -120,11 +120,12 @@ namespace IPCA.Networking
             Room_ConnectionState = NetworkConState.Connected;
 
             Debug.Log("Connected to room!");
-            
-            PhotonNetwork.LoadLevel("TestRoom_WaitingRoom");
 
             if (PhotonNetwork.IsMasterClient)
+            {
                 Network_isLobbyLeader = true;
+                PhotonNetwork.LoadLevel("TestRoom_WaitingRoom"); // fixes client instantiating twice
+            }
             else
                 Network_isLobbyLeader = false;
         }
