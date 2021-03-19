@@ -57,7 +57,10 @@ public class Menu_UI : baseActor
         VoteMenu.interactable = true;
 
         //Skip button
-        VoteMenu.transform.Find("ButtonSkip").GetComponent<Button>().onClick.AddListener(delegate
+        Button skip = VoteMenu.transform.Find("ButtonSkip").GetComponent<Button>();
+        skip.onClick.RemoveAllListeners();
+
+        skip.onClick.AddListener(delegate
         {
             //Send Vote
             if (GameManager.Instance.ingameManager)
@@ -80,7 +83,11 @@ public class Menu_UI : baseActor
                 VoteMenu.interactable = true;
                 string vote = players[i - 1];
 
-                item.transform.Find("Back").GetComponent<Button>().onClick.AddListener(delegate 
+                Button bt = item.transform.Find("Back").GetComponent<Button>();
+                
+                bt.onClick.RemoveAllListeners();
+
+                bt.onClick.AddListener(delegate 
                 {
                     //Send Vote
                     if(GameManager.Instance.ingameManager)
@@ -95,7 +102,6 @@ public class Menu_UI : baseActor
 
             i++;
         }
-
     }
 
     public void Menu_CloseVotingMenu()
