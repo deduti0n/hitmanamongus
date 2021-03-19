@@ -122,6 +122,12 @@ public class DebugMenuManager
             PLAYER_FLY_MODE = !PLAYER_FLY_MODE;
         }));
 
+        debugItems.Add(new DebugMenuItem("Suicide", DebugItemType.Click, delegate ()
+        {
+            //Kill myself
+            GameManager.Instance.networkManager.Network_PlayerRef.Character_Kill();
+        }));
+
         debugItems.Add(new DebugMenuItem("Disconnect", DebugItemType.Click, delegate ()
         {
             Debug.Log("Disconnecting...");

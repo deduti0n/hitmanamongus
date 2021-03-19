@@ -28,6 +28,9 @@ public class Network_SyncPlayerController : MonoBehaviourPun, IPunObservable
 
             //Death state
             stream.SendNext(PlayerRef.Character_isDead);
+
+            //Is Suspect
+            stream.SendNext(PlayerRef.Character_isSuspect);
         }
         else
         {
@@ -39,6 +42,9 @@ public class Network_SyncPlayerController : MonoBehaviourPun, IPunObservable
 
             //Death state
             PlayerRef.Character_isDead = ((bool)stream.ReceiveNext());
+
+            //Is Suspect
+            PlayerRef.Character_isSuspect = ((bool)stream.ReceiveNext());
         }
     }
 

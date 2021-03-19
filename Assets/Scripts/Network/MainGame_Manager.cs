@@ -32,9 +32,14 @@ public class MainGame_Manager : baseActor
 
     public float VotingTimer = 30f;
 
-    public Dictionary<string, string> VotingPoll = new Dictionary<string,string>();
+    public List<string> VotingPoll = new List<string>();
+
+    public bool alreadyVoted = false;
 
     private PhotonView photonView;
+
+    private bool votingStarted = false;
+    private bool GameStarted = false;
 
     protected override void onStart()
     {
@@ -83,25 +88,69 @@ public class MainGame_Manager : baseActor
     }
 
     [PunRPC]
-    void StartVote()
+    void StartVote(string players)
     {
+        //players --> filter out players names and show them on screen to start voting
+
         //Start timer and voting menu
         Game_UI_Ref.Menu_OpenVotingMenu();
+
+        votingStarted = true;
+    }
+
+    [PunRPC]
+    void CloseVote(string toKick)
+    {
+        Game_UI_Ref.Menu_CloseVotingMenu();
+        VotingTimer = 30;
+        VotingPoll.Clear();
+        alreadyVoted = false;
+
+        if(GameManager.Instance.PlayerName == toKick)
+            GameManager.Instance.networkManager.Network_PlayerRef.Character_Kill();
+    }
+
+    [PunRPC]
+    void Vote(string playerName)
+    {
+        if(GameManager.Instance.networkManager.Network_isLobbyLeader)
+        {
+            VotingPoll.Add(playerName);
+        }
+
+        alreadyVoted = true;
+    }
+
+    [PunRPC]
+    void SetSuspect(string playerName)
+    {
+        if (GameManager.Instance.PlayerName == playerName)
+            GameManager.Instance.networkManager.Network_PlayerRef.Character_isSuspect = true;
     }
 
     private void Update_Input()
     {
-        if(Input.GetKeyDown(KeyCode.Z))
+        if(Input.GetKeyDown(KeyCode.Z) && !votingStarted)
         {
-            //Method call on all
+            //Method call on all including self
             photonView.RPC("StartVote", RpcTarget.All);
         }
     }
 
     public override void onUpdate()
     {
+        if(!GameStarted && GameManager.Instance.networkManager.Network_isLobbyLeader && GameManager.Instance.networkManager.Room_CurrentConnections > 3)
+        {
+            //Set someone as sus
+            List<Character_PlayerController> avatars = new List<Character_PlayerController>(GameManager.Instance.networkManager.Network_GetAllPlayerAvatars());
+
+            photonView.RPC("SetSuspect", RpcTarget.All, avatars[Random.Range(0, avatars.Count)].UI_PlayerName.text);
+
+            GameStarted = true;
+        }
+
         //Leader only
-        if (GameManager.Instance.networkManager.Network_isLobbyLeader && !isGameOver && (Game_GetAlivePlayers() < 3 || Game_isEveryInnocentDead() || !Game_isAnySusAlive()))
+        if (GameStarted && GameManager.Instance.networkManager.Network_isLobbyLeader && GameManager.Instance.networkManager.Room_CurrentConnections > 2 && !isGameOver && (Game_GetAlivePlayers() < 3 || Game_isEveryInnocentDead() || !Game_isAnySusAlive()))
         {
             if (Game_isEveryInnocentDead())
             {
@@ -120,9 +169,14 @@ public class MainGame_Manager : baseActor
             }
 
             //Voting
-            if ((VotingTimer < 30f || VotingPoll.Count >= GameManager.Instance.networkManager.Room_CurrentConnections))
+            if ((VotingTimer < 30f || VotingPoll.Count >= GameManager.Instance.networkManager.Room_CurrentConnections) && votingStarted)
             {
-                //Either skip or kill the chosen player
+                string toKill = "";
+
+                //Skip or kill a player
+                photonView.RPC("CloseVote", RpcTarget.All, toKill);
+
+                votingStarted = false;
             }
         }
 
@@ -140,7 +194,7 @@ public class MainGame_Manager : baseActor
 
         foreach (Character_PlayerController player in GameManager.Instance.networkManager.Network_GetAllPlayerAvatars())
         {
-            if (!player.char_isSus && !player.Character_isDead)
+            if (!player.Character_isSuspect && !player.Character_isDead)
                 alive++;
         }
 
@@ -153,7 +207,7 @@ public class MainGame_Manager : baseActor
 
         foreach (Character_PlayerController player in GameManager.Instance.networkManager.Network_GetAllPlayerAvatars())
         {
-            if (player.char_isSus && !player.Character_isDead)
+            if (player.Character_isSuspect && !player.Character_isDead)
                 alive++;
         }
 

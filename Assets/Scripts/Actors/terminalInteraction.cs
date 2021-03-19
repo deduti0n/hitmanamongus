@@ -13,6 +13,8 @@ public class terminalInteraction : interactionActor
     {
         base.Execute();
 
+        GameManager.Instance.networkManager.Network_PlayerRef.Character_StartTask();
+
         //UI loading task timer and mark as complete
         isInteractible = false;
     }

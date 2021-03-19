@@ -6,6 +6,12 @@ using UnityEngine.UI;
 
 public class Menu_UI : baseActor
 {
+    [Header("Sus")]
+    public CanvasGroup Killer_Root;
+
+    [Header("Death")]
+    public CanvasGroup Death_Root;
+
     [Header("Interact")]
     public CanvasGroup Interaction_Root;
 
@@ -80,6 +86,12 @@ public class Menu_UI : baseActor
             Interaction_Root.alpha = 1f;
         else
             Interaction_Root.alpha = 0f;
+
+        UI_SetTaskProgressState(PlayerRef.char_duringTask);
+
+        Death_Root.alpha = Mathf.Lerp(Death_Root.alpha, PlayerRef.Character_isDead ? 1f : 0f, 5f * Time.deltaTime);
+        Killer_Root.alpha = Mathf.Lerp(Killer_Root.alpha, PlayerRef.Character_isSuspect ? 1f : 0f, 5f * Time.deltaTime);
+
     }
 
     public override void onFixedUpdate()

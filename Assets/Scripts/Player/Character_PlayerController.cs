@@ -23,7 +23,7 @@ namespace IPCA.Characters
         private Vector3 char_StartPosition;
         public interactionActor targetInteraction;
 
-        public bool char_isSus = false;
+        public bool char_duringTask = false;
 
         [HideInInspector]
         public Menu_UI Game_UI_Ref;
@@ -128,7 +128,7 @@ namespace IPCA.Characters
 
         public override void onUpdate()
         {
-            if (Owner == CharacterOwner.Mine && !Character_Lock)
+            if (Owner == CharacterOwner.Mine && !Character_isDead && !Character_Lock && !char_duringTask)
             {
                 //Update locally
                 Update_Locomotion();
@@ -138,27 +138,22 @@ namespace IPCA.Characters
             }
         }
 
-        public override void onFixedUpdate()
+        public void Character_StartTask()
         {
-
+            StartCoroutine(startTask());
         }
 
-        public override void onLateUpdate()
+        IEnumerator startTask()
         {
-
-        }
-
-        protected override void onDestroy()
-        {
-
+            char_duringTask = true;
+            yield return new WaitForSeconds(4f);
+            char_duringTask = false;
         }
 
         public void Character_Kill()
         {
             Character_isDead = true;
-
-            //Play death animation
-
+            char_animcontroller.SetTrigger("Death");
         }
 
         public void UpdateTasks()
